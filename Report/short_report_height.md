@@ -6,9 +6,9 @@ Height was measured in exactly **109 of 215 trees (50.7%)**, and the pattern is
 perfectly consistent: **only rows 3, 4, and 5** (the three interior rows) have
 measured height; **rows 1, 2, 6, and 7** (the four border rows) have HT = 0 for
 every single tree. This confirms the assignment's description — a deliberate
-systematic subsample of interior rows, designed to avoid border/edge effects
-(edge trees typically grow differently — often taller and more open-crowned — due
-to reduced competition at the plot boundary).
+systematic subsample of interior rows, stated as a design intended to avoid
+border/edge effects. Section 5 tests this assumption directly against the data
+rather than taking it at face value.
 
 ## 2. Hypsometric models (Task 2)
 
@@ -108,50 +108,92 @@ when subtracting measured-only from complete). See Section 5 for the explanation
 
 ## 5. Critical discussion — risks of the systematic subsample (Task 5)
 
-**Does the systematic center-row subsample introduce bias? Yes — specifically for
-dominant height, and the direction is explainable.**
+**Does the systematic center-row subsample introduce bias?** To answer this
+properly — rather than by assumption — we tested representativeness directly,
+since DBH (unlike height) was measured on all 215 trees. This lets us compare the
+diameter distribution of the "measured" rows (3, 4, 5) against the "unmeasured"
+rows (1, 2, 6, 7) with no modeling involved.
 
-**Why mean height is not meaningfully biased, but dominant height is:**
-Dominant height, by definition, is driven by the *largest* trees. If the largest
-trees in a plot are disproportionately likely to occur in the *border rows*
-(rows 1, 2, 6, 7) — which is biologically plausible, since border trees face less
-competition for light and growing space than interior trees — then a model fit
-using *only* interior-row trees will never actually see the plot's true largest
-individuals. It only sees the (systematically slightly smaller) interior
-population, and the hypsometric model built from that population, when applied
-back to estimate heights for border trees, still assumes the DBH→HT relationship
-learned from the interior sample. If the true dominant trees are large-DBH border
-trees, the naive "measured-only" dominant height calculation *never includes them
-at all* (since they weren't measured), silently excluding exactly the individuals
-that matter most for this metric.
+### Representativeness checks (evidence, not assumption)
 
-**Direction of the bias:** the measured-only dominant height consistently
-underestimating the true dominant height (complete dataset). This is consistent
-with the interpretation above — border-row release effects allow the true largest
-trees in the stand to be concentrated in border positions, and a
-subsample that structurally excludes ~57% of the tree population (4 of 7 rows)
-from ever being candidates for the "dominant" ranking will tend to systematically
-miss some of the actual largest individuals.
+**Distributional comparison — no significant difference overall:**
 
-**Practical implication:** for any application where dominant height matters —
-site index classification, growth/yield modeling, silvicultural decision-making —
-using only the interior-row subsample's own trees to rank "dominant" individuals
-would understate site productivity. The fix implemented here (estimating heights
-for ALL 215 trees via the hypsometric model, THEN ranking across the complete
-population to find dominant height) largely corrects this, because it lets
-border-row trees compete for the "dominant" ranking based on their (estimated)
-height, even though their height was never directly measured.
+| Test | Statistic | p-value |
+|---|---|---|
+| Welch's t-test (means) | t = 1.070 | 0.286 |
+| Mann-Whitney U (ranks) | U = 6020.5 | 0.594 |
+| Kolmogorov-Smirnov (shape) | D = 0.094 | 0.677 |
 
-**Remaining caveat:** this correction still depends entirely on the hypsometric
-model being valid for border trees, which were never actually measured — if
-border trees have a systematically different DBH-height relationship than
-interior trees (plausible, given they may express the DBH-height allometry
-differently under the release effect), the model built purely on interior trees
-could still mis-estimate their true heights, even if it correctly identifies which
-individuals are DBH-dominant.
+All three tests return p-values well above 0.05 — there is no statistically
+reliable evidence that the interior-row (measured) and border-row (unmeasured)
+populations have different DBH distributions at the stand level.
 
-**Recommendation:** if resources allow in future inventories, measuring height on
-at least a handful of border-row trees per plot (not necessarily all of them)
-would allow testing whether the border and interior populations share the same
-hypsometric relationship — directly validating (or correcting) the assumption this
-entire estimation approach rests on.
+**Tail comparison — where it matters most for dominant height:**
+
+| | Interior rows (measured) | Border rows (unmeasured) |
+|---|---|---|
+| Top 10% largest (mean DBH) | 20.44 cm | 20.12 cm |
+| Bottom 10% smallest (mean DBH) | 11.10 cm | 8.43 cm |
+| 5th percentile | 11.58 cm | 8.86 cm |
+| 95th percentile | 19.96 cm | 19.71 cm |
+
+The **largest** trees are nearly identical between the two groups — meaning there
+is no evidence that genuinely dominant (large-DBH) trees are disproportionately
+concentrated in border positions, which is an initial hypothesis this report
+considered and explicitly rules out here. What *does* differ is the **small end**:
+border rows contain more small/suppressed trees, plausibly due to mortality
+patterns or edge competition effects — but this does not, by itself, bias
+dominant height (which depends on the top of the distribution, not the bottom).
+
+### So why was dominant height still biased in Section 4?
+
+**Per-plot check — where each plot's single largest tree actually sits:**
+
+| Plot | Largest tree's row | Border row? |
+|---|---|---|
+| 1 | 7 | Yes |
+| 2 | 6 | Yes |
+| 3 | 6 | Yes |
+| 4 | 7 | Yes |
+| 5 | 1 | Yes |
+| 6 | 3 | No |
+
+In **5 of 6 plots**, the single largest-DBH tree happens to sit in a border row —
+even though, as shown above, there is no stand-wide statistical tendency for large
+trees to concentrate there. This is best explained as **plot-specific spatial
+variation** (natural, expected randomness in where the biggest individual in a
+small sample of ~35 trees happens to fall) rather than a systematic biological
+bias. Because the measured-only subsample structurally excludes 4 of 7 rows,
+it has a mechanical ~57% chance of missing any given plot's true largest tree
+regardless of any underlying distributional difference — and with 5 of 6 plots
+landing that way, that's exactly what happened here.
+
+### Practical implication
+
+For any application where dominant height matters — site index classification,
+growth/yield modeling, silvicultural decision-making — using only the
+interior-row subsample to rank "dominant" individuals risks missing a plot's true
+largest trees, **not because border and interior populations are biologically
+different, but simply because the subsample structurally excludes most of the
+plot's area from ever being considered.** The fix implemented in Section 4
+(estimating heights for all 215 trees via the hypsometric model, then ranking
+across the complete population) corrects this, since it lets border-row trees
+compete for the "dominant" ranking using their DBH (measured directly) and their
+estimated height.
+
+### Remaining caveat
+
+This correction still depends on the hypsometric model being valid when applied
+to border trees, which were never height-measured. Since the distributional
+checks above found no significant DBH difference between interior and border
+populations, there's no strong evidence the DBH→height relationship itself would
+differ either — but this remains an assumption, not something directly verified,
+since no border tree in this dataset has a measured height to check against.
+
+### Recommendation
+
+If resources allow in future inventories, measuring height on a handful of
+border-row trees per plot (not necessarily all of them) would let the
+DBH→height relationship itself be tested for interior-vs-border consistency —
+directly validating the one assumption this entire estimation approach still
+rests on, rather than inferring it indirectly from the DBH distributions alone.
